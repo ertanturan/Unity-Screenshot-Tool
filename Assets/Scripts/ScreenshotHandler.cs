@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
@@ -26,7 +27,7 @@ public class ScreenshotHandler : MonoBehaviour
 
     private void OnPostRender()
     {
-        Debug.Log("on post render");
+
         if (_captureOnNextFrame)
         {
             Debug.Log("capture true");
@@ -41,9 +42,21 @@ public class ScreenshotHandler : MonoBehaviour
             result.ReadPixels(rect, 0, 0);
 
             byte[] byteArray = result.EncodeToPNG();
+            string filePath = CapturePath();
 
-            File.WriteAllBytes(CapturePath(), byteArray);
-            FileStream stream = new FileStream(_screenshotPath, FileMode.Create);
+            FileInfo file = new FileInfo(filePath);
+            //if (!file.Exists)
+            //{
+            //    Debug.Log("File doesn't exist at the given path .. ");
+            //    file.Directory.Create();
+            //    Debug.Log("Created new file");
+            //}
+            //else
+            //{
+            //    Debug.Log("File exists ... Will be overwritten..");
+            //}
+
+            File.WriteAllBytes(file.FullName, byteArray);
 
             RenderTexture.ReleaseTemporary(rendTexture);
 
@@ -69,8 +82,23 @@ public class ScreenshotHandler : MonoBehaviour
 
     private string CapturePath()
     {
+        DateTime current = DateTime.Now;
+        string time = current.ToLongTimeString().Trim(' ').Split(' ')[0];
+        char[] temp = time.ToCharArray();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < temp.Length; i++)
+        {
+            if (temp[i]!=':')
+            {
+                sb.Append(temp[i]);
+            }
+        }
+
+
+        sb.Append(current.Ticks.ToString());
         return Path.Combine(_screenshotPath, _pictureName + "_" +
-                   DateTime.Now.ToShortTimeString().Trim(' ') + _extension);
+         sb+ _extension);
+
     }
 
 
