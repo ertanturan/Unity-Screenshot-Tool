@@ -6,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class ScreenshotHandler : MonoBehaviour
 {
-
+    public Vector2 PictureSpecs;
     private string _extension = ".png";
     private string _pictureName = "Screenshot";
 
@@ -23,6 +23,7 @@ public class ScreenshotHandler : MonoBehaviour
         Instance = this;
         _camera = GetComponent<Camera>();
         _screenshotPath = Path.Combine(Application.persistentDataPath, "Screenshots");
+        Debug.Log(_screenshotPath);
     }
 
     private void OnPostRender()
@@ -45,16 +46,16 @@ public class ScreenshotHandler : MonoBehaviour
             string filePath = CapturePath();
 
             FileInfo file = new FileInfo(filePath);
-            //if (!file.Exists)
-            //{
-            //    Debug.Log("File doesn't exist at the given path .. ");
-            //    file.Directory.Create();
-            //    Debug.Log("Created new file");
-            //}
-            //else
-            //{
-            //    Debug.Log("File exists ... Will be overwritten..");
-            //}
+            if (!file.Exists)
+            {
+                Debug.Log("File doesn't exist at the given path .. ");
+                file.Directory.Create();
+                Debug.Log("Created new file");
+            }
+            else
+            {
+                Debug.Log("File exists ... Will be overwritten..");
+            }
 
             File.WriteAllBytes(file.FullName, byteArray);
 
@@ -71,7 +72,7 @@ public class ScreenshotHandler : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Debug.Log("SPACE");
-            CaptureShot(500, 500);
+            CaptureShot((int)PictureSpecs.x, (int)PictureSpecs.y);
         }
     }
 
