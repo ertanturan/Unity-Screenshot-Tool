@@ -70,6 +70,7 @@ public class ScreenshotHandler : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            Debug.Log("SPACE");
             CaptureShot(500, 500);
         }
     }
