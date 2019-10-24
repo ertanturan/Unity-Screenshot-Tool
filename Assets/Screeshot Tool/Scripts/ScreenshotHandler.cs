@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine;
 public class ScreenshotHandler : MonoBehaviour
 {
     [Tooltip("Width and Height of a desired screenshot .")]
-    public Vector2 PictureSpecs;
+    public Vector2[] PictureSpecs;
     [Tooltip("Keyboard key to actually take screenshot . ")]
     public KeyCode ScreenShotKey;
     [Tooltip("Choosing a picture format from here")]
@@ -52,7 +53,7 @@ public class ScreenshotHandler : MonoBehaviour
         {
             Debug.LogWarning("No path given .. Will create one ..");
         }
-        if (PictureSpecs == Vector2.zero)
+        if (PictureSpecs.Length == 0)
         {
             Debug.LogError("Width and Height needed !");
         }
@@ -86,7 +87,7 @@ public class ScreenshotHandler : MonoBehaviour
 
             if (ScreenshotPath == "")
             {
-                filePath = CapturePath();
+                filePath = CapturePath(rendTexture.width,rendTexture.height);
             }
             else
             {
@@ -109,10 +110,7 @@ public class ScreenshotHandler : MonoBehaviour
             _camera.targetTexture = null;
             Debug.Log("Screen captured and saved to   '" + filePath + "' ");
 
-            if (OpenFileDirectory)
-            {
-                System.Diagnostics.Process.Start(_screenshotPath);
-            }
+
             _captureOnNextFrame = false;
         }
     }
@@ -122,19 +120,35 @@ public class ScreenshotHandler : MonoBehaviour
         if (Input.GetKeyDown(ScreenShotKey))
         {
             Debug.Log("SPACE");
-            CaptureShot((int)PictureSpecs.x, (int)PictureSpecs.y);
+
+            StartCoroutine(ScreenshotWithDelay());
+        }
+    }
+
+    private IEnumerator ScreenshotWithDelay()
+    {
+        int index = 0;
+        while (index!=PictureSpecs.Length)
+        {
+            yield return new WaitForSeconds(2f);
+            CaptureShot((int)PictureSpecs[index].x, (int)PictureSpecs[index].y);
+            index++;
+            yield return null;
+        }
+
+        if (OpenFileDirectory)
+        {
+            System.Diagnostics.Process.Start(_screenshotPath);
         }
     }
 
     private void CaptureShot(int width, int height)
     {
-
-
         _camera.targetTexture = RenderTexture.GetTemporary(width, height, 16);
         _captureOnNextFrame = true;
     }
 
-    private string CapturePath()
+    private string CapturePath(int width , int height)
     {
         DateTime current = DateTime.Now;
         string time = current.ToLongTimeString().Trim(' ').Split(' ')[0];
@@ -150,7 +164,8 @@ public class ScreenshotHandler : MonoBehaviour
 
 
         sb.Append(current.Ticks.ToString());
-        return Path.Combine(_screenshotPath, _pictureName + "_" +
+        return Path.Combine(_screenshotPath, _pictureName + "_" +width.ToString()+"_"+height.ToString()
+                                             +"_"+
          sb + ExtensionHandler.Extension(Extension));
 
     }
