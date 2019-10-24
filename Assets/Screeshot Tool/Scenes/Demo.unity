@@ -480,7 +480,7 @@ MonoBehaviour:
   TextureFormat: 17
   ScreenshotPath: 
   Extension: 0
-  OpenFileDirectory: 0
+  OpenFileDirectory: 1
   Canvas: {fileID: 6587518}
 --- !u!1 &587971440
 GameObject:
