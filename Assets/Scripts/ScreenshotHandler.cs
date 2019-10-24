@@ -6,8 +6,17 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class ScreenshotHandler : MonoBehaviour
 {
+    [Tooltip("Width and Height of a desired screenshot .")]
     public Vector2 PictureSpecs;
-    private string _extension = ".png";
+    [Tooltip("Keyboard key to actually take screenshot . ")]
+    public KeyCode ScreenShotKey;
+    [Tooltip("Choosing a picture format from here")]
+    public TextureFormat TextureFormat;
+    [Tooltip("Path to save screenshots ...")]
+    public string ScreenshotPath;
+    [Tooltip("Extension of the desired screenshot")]
+    public PictureExtension Extension;
+
     private string _pictureName = "Screenshot";
 
     private static string _screenshotPath;
@@ -23,38 +32,65 @@ public class ScreenshotHandler : MonoBehaviour
         Instance = this;
         _camera = GetComponent<Camera>();
         _screenshotPath = Path.Combine(Application.persistentDataPath, "Screenshots");
-        Debug.Log(_screenshotPath);
+    }
+
+    private void Start()
+    {
+        if (ScreenShotKey == KeyCode.None)
+        {
+            Debug.LogError("No screenshot key selected...");
+        }
+        if (TextureFormat == 0)
+        {
+            Debug.LogError("No Texture format selected...");
+        }
+        if (ScreenshotPath == "")
+        {
+            Debug.LogWarning("No path given .. Will create one ..");
+        }
+        if (PictureSpecs == Vector2.zero)
+        {
+            Debug.LogError("Width and Height needed !");
+        }
+
     }
 
     private void OnPostRender()
     {
-
         if (_captureOnNextFrame)
         {
-            Debug.Log("capture true");
+            Debug.Log("Capture True..");
 
             RenderTexture rendTexture = _camera.targetTexture;
-            Debug.Log("renderexture taken");
+            Debug.Log("Rendertexture taken..");
             Texture2D result = new Texture2D(rendTexture.width, rendTexture.height,
-                TextureFormat.ARGB32, false);
+                TextureFormat, false);
 
             Rect rect = new Rect(0, 0, rendTexture.width, rendTexture.height);
 
             result.ReadPixels(rect, 0, 0);
+            byte [] byteArray;
 
-            byte[] byteArray = result.EncodeToPNG();
-            string filePath = CapturePath();
+            byteArray = ExtensionHandler.ByteArray(result, Extension);
 
-            FileInfo file = new FileInfo(filePath);
-            if (!file.Exists)
+            string filePath;
+
+            if (ScreenshotPath == "")
             {
-                Debug.Log("File doesn't exist at the given path .. ");
-                file.Directory.Create();
-                Debug.Log("Created new file");
+                filePath = CapturePath();
             }
             else
             {
-                Debug.Log("File exists ... Will be overwritten..");
+                filePath = ScreenshotPath;
+            }
+
+            FileInfo file = new FileInfo(filePath);
+
+            if (!file.Exists)
+            {
+                Debug.Log("ScreenshotPath doesn't exist at the given  .. ");
+                file.Directory.Create();
+                Debug.Log("Created given path..");
             }
 
             File.WriteAllBytes(file.FullName, byteArray);
@@ -62,14 +98,14 @@ public class ScreenshotHandler : MonoBehaviour
             RenderTexture.ReleaseTemporary(rendTexture);
 
             _camera.targetTexture = null;
-            Debug.Log("captured");
+            Debug.Log("Screen captured and saved to   '" + filePath + "' ");
             _captureOnNextFrame = false;
         }
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(ScreenShotKey))
         {
             Debug.Log("SPACE");
             CaptureShot((int)PictureSpecs.x, (int)PictureSpecs.y);
@@ -90,7 +126,7 @@ public class ScreenshotHandler : MonoBehaviour
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < temp.Length; i++)
         {
-            if (temp[i]!=':')
+            if (temp[i] != ':')
             {
                 sb.Append(temp[i]);
             }
@@ -99,9 +135,8 @@ public class ScreenshotHandler : MonoBehaviour
 
         sb.Append(current.Ticks.ToString());
         return Path.Combine(_screenshotPath, _pictureName + "_" +
-         sb+ _extension);
+         sb + ExtensionHandler.Extension(Extension));
 
     }
-
 
 }
