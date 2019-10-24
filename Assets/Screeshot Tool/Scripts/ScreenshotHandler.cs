@@ -17,6 +17,10 @@ public class ScreenshotHandler : MonoBehaviour
     [Tooltip("Extension of the desired screenshot")]
     public PictureExtension Extension;
 
+    [Tooltip("Opens where your screenshots saved to..")]
+    public bool OpenFileDirectory;
+    public Canvas Canvas;
+    // Directory Path
     private string _pictureName = "Screenshot";
 
     private static string _screenshotPath;
@@ -53,6 +57,12 @@ public class ScreenshotHandler : MonoBehaviour
             Debug.LogError("Width and Height needed !");
         }
 
+        if (Canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            Debug.LogWarning("!! ATTENTION !! : Capturing screenshot " +
+                             "while your canvas's rendermode is`Screen Space - Overlay` " +
+                             "won't work with UI . Try to switch rendermode to something else... ");
+        }
     }
 
     private void OnPostRender()
@@ -60,7 +70,6 @@ public class ScreenshotHandler : MonoBehaviour
         if (_captureOnNextFrame)
         {
             Debug.Log("Capture True..");
-
             RenderTexture rendTexture = _camera.targetTexture;
             Debug.Log("Rendertexture taken..");
             Texture2D result = new Texture2D(rendTexture.width, rendTexture.height,
@@ -69,7 +78,7 @@ public class ScreenshotHandler : MonoBehaviour
             Rect rect = new Rect(0, 0, rendTexture.width, rendTexture.height);
 
             result.ReadPixels(rect, 0, 0);
-            byte [] byteArray;
+            byte[] byteArray;
 
             byteArray = ExtensionHandler.ByteArray(result, Extension);
 
@@ -99,6 +108,11 @@ public class ScreenshotHandler : MonoBehaviour
 
             _camera.targetTexture = null;
             Debug.Log("Screen captured and saved to   '" + filePath + "' ");
+
+            if (OpenFileDirectory)
+            {
+                System.Diagnostics.Process.Start(_screenshotPath);
+            }
             _captureOnNextFrame = false;
         }
     }
@@ -114,6 +128,8 @@ public class ScreenshotHandler : MonoBehaviour
 
     private void CaptureShot(int width, int height)
     {
+
+
         _camera.targetTexture = RenderTexture.GetTemporary(width, height, 16);
         _captureOnNextFrame = true;
     }
