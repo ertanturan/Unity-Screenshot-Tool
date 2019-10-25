@@ -29,7 +29,6 @@ public class ScreenshotHandler : MonoBehaviour
 
     #endregion
 
-
     private string _pictureName = "Screenshot";
 
     private static string _screenshotPath;
@@ -79,53 +78,66 @@ public class ScreenshotHandler : MonoBehaviour
         }
     }
 
-    private void OnPostRender()
+    void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (_captureOnNextFrame)
         {
-            Debug.Log("Capture True..");
-            RenderTexture rendTexture = _camera.targetTexture;
-            Debug.Log("Rendertexture taken..");
-            Texture2D result = new Texture2D(rendTexture.width, rendTexture.height,
-                TextureFormat, false);
-
-            Rect rect = new Rect(0, 0, rendTexture.width, rendTexture.height);
-
-            result.ReadPixels(rect, 0, 0);
-            byte[] byteArray;
-
-            byteArray = ExtensionHandler.ByteArray(result, Extension);
-
-            string filePath;
-
-            if (ScreenshotPath == "")
+            for (int i = 0; i < PictureSpecs.Length; i++)
             {
-                filePath = CapturePath(rendTexture.width, rendTexture.height);
+                Debug.Log("HERE");
+                var tempRT = RenderTexture.GetTemporary((int)PictureSpecs[i].x, (int)PictureSpecs[i].y);
+                Graphics.Blit(source, tempRT);
+
+                var tempTex = new Texture2D((int)PictureSpecs[i].x, (int)PictureSpecs[i].y,
+                    TextureFormat.RGBA32, false);
+
+                tempTex.ReadPixels(new Rect(0, 0, (int)PictureSpecs[i].x,
+                    (int)PictureSpecs[i].y), 0, 0, false);
+
+                tempTex.Apply();
+
+                byte[] byteArray;
+
+                byteArray = ExtensionHandler.ByteArray(tempTex, Extension);
+
+                string filePath;
+
+                if (ScreenshotPath == "")
+                {
+                    filePath = CapturePath(tempRT.width, tempRT.height);
+                }
+                else
+                {
+                    filePath = ScreenshotPath;
+                }
+
+                FileInfo file = new FileInfo(filePath);
+
+                if (!file.Exists)
+                {
+                    Debug.Log("ScreenshotPath doesn't exist at the given  .. ");
+                    file.Directory.Create();
+                    Debug.Log("Created given path..");
+                }
+
+                File.WriteAllBytes(file.FullName, byteArray);
+
+
+                Destroy(tempTex);
+                RenderTexture.ReleaseTemporary(tempRT);
+
+                Graphics.Blit(source, destination);
+                Debug.Log("FINISHED");
             }
-            else
+
+            if (OpenFileDirectory)
             {
-                filePath = ScreenshotPath;
+                System.Diagnostics.Process.Start(_screenshotPath);
             }
-
-            FileInfo file = new FileInfo(filePath);
-
-            if (!file.Exists)
-            {
-                Debug.Log("ScreenshotPath doesn't exist at the given  .. ");
-                file.Directory.Create();
-                Debug.Log("Created given path..");
-            }
-
-            File.WriteAllBytes(file.FullName, byteArray);
-
-            RenderTexture.ReleaseTemporary(rendTexture);
-
-            _camera.targetTexture = null;
-            Debug.Log("Screen captured and saved to   '" + filePath + "' ");
-
-
             _captureOnNextFrame = false;
         }
+
+
     }
 
     private void Update()
@@ -134,7 +146,7 @@ public class ScreenshotHandler : MonoBehaviour
         {
             if (!_isInProgess)
             {
-                StartCoroutine(ScreenshotWithDelay());
+                _captureOnNextFrame = true;
             }
             else
             {
@@ -144,45 +156,9 @@ public class ScreenshotHandler : MonoBehaviour
 
     }
 
-    private IEnumerator ScreenshotWithDelay()
-    {
-        int index = 0;
-        while (index != PictureSpecs.Length)
-        {
-            yield return new WaitForSeconds(2f);
-
-            try
-            {
-                CaptureShot((int)PictureSpecs[index].x, (int)PictureSpecs[index].y);
-                index++;
-                _isInProgess = true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("There has been an error : " + e.Message);
-                StopAllCoroutines();
-                _isInProgess = false;
-            }
-
-            yield return null;
-        }
-
-        if (OpenFileDirectory)
-        {
-            System.Diagnostics.Process.Start(_screenshotPath);
-        }
-
-        _isInProgess = false;
-    }
-
-    private void CaptureShot(int width, int height)
-    {
-        _camera.targetTexture = RenderTexture.GetTemporary(width, height, 16);
-        _captureOnNextFrame = true;
-    }
-
     private string CapturePath(int width, int height)
     {
+
         DateTime current = DateTime.Now;
         string time = current.ToLongTimeString().Trim(' ').Split(' ')[0];
         char[] temp = time.ToCharArray();
@@ -194,7 +170,6 @@ public class ScreenshotHandler : MonoBehaviour
                 sb.Append(temp[i]);
             }
         }
-
 
         sb.Append(current.Ticks.ToString());
         return Path.Combine(_screenshotPath, _pictureName + "_" + width.ToString() + "_" + height.ToString()

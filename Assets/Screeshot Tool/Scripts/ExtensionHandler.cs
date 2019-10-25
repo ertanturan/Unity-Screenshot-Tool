@@ -12,19 +12,19 @@ public static class ExtensionHandler
     {
         if(extension==PictureExtension.EXR)
         {
-            return texture.EncodeToEXR();
+            return ImageConversion.EncodeToEXR(texture);
         }
         else if(extension==PictureExtension.JPG)
         {
-            return texture.EncodeToJPG();
+            return ImageConversion.EncodeToJPG(texture);
         }
         else if(extension==PictureExtension.PNG)
         {
-            return texture.EncodeToPNG();
+            return ImageConversion.EncodeToPNG(texture);
         }
         else if(extension==PictureExtension.TGA)
         {
-            return texture.EncodeToTGA();
+            return ImageConversion.EncodeToTGA(texture);
         }
         else
         {
