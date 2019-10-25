@@ -7,26 +7,34 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class ScreenshotHandler : MonoBehaviour
 {
+    public static ScreenshotHandler Instance;
+
+    #region Editor
+
     [Tooltip("Width and Height of a desired screenshot .")]
     public Vector2[] PictureSpecs;
     [Tooltip("Keyboard key to actually take screenshot . ")]
     public KeyCode ScreenShotKey;
+
     [Tooltip("Choosing a picture format from here")]
-    public TextureFormat TextureFormat;
+    private TextureFormat TextureFormat = TextureFormat.ARGB32;
     [Tooltip("Path to save screenshots ...")]
     public string ScreenshotPath;
     [Tooltip("Extension of the desired screenshot")]
     public PictureExtension Extension;
 
     [Tooltip("Opens where your screenshots saved to..")]
-    public bool OpenFileDirectory;
+    public bool OpenFileDirectory = true;
     public Canvas Canvas;
-    // Directory Path
+
+    #endregion
+
+
     private string _pictureName = "Screenshot";
 
     private static string _screenshotPath;
 
-    public static ScreenshotHandler Instance;
+    private bool _isInProgess;
 
     private Camera _camera;
 
@@ -64,6 +72,11 @@ public class ScreenshotHandler : MonoBehaviour
                              "while your canvas's rendermode is`Screen Space - Overlay` " +
                              "won't work with UI . Try to switch rendermode to something else... ");
         }
+
+        if (Extension == PictureExtension.EXR)
+        {
+            TextureFormat = TextureFormat.RGBAHalf;
+        }
     }
 
     private void OnPostRender()
@@ -87,7 +100,7 @@ public class ScreenshotHandler : MonoBehaviour
 
             if (ScreenshotPath == "")
             {
-                filePath = CapturePath(rendTexture.width,rendTexture.height);
+                filePath = CapturePath(rendTexture.width, rendTexture.height);
             }
             else
             {
@@ -119,20 +132,38 @@ public class ScreenshotHandler : MonoBehaviour
     {
         if (Input.GetKeyDown(ScreenShotKey))
         {
-            Debug.Log("SPACE");
-
-            StartCoroutine(ScreenshotWithDelay());
+            if (!_isInProgess)
+            {
+                StartCoroutine(ScreenshotWithDelay());
+            }
+            else
+            {
+                Debug.LogWarning("Another capture process in progress wait for a while ...");
+            }
         }
+
     }
 
     private IEnumerator ScreenshotWithDelay()
     {
         int index = 0;
-        while (index!=PictureSpecs.Length)
+        while (index != PictureSpecs.Length)
         {
             yield return new WaitForSeconds(2f);
-            CaptureShot((int)PictureSpecs[index].x, (int)PictureSpecs[index].y);
-            index++;
+
+            try
+            {
+                CaptureShot((int)PictureSpecs[index].x, (int)PictureSpecs[index].y);
+                index++;
+                _isInProgess = true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("There has been an error : " + e.Message);
+                StopAllCoroutines();
+                _isInProgess = false;
+            }
+
             yield return null;
         }
 
@@ -140,6 +171,8 @@ public class ScreenshotHandler : MonoBehaviour
         {
             System.Diagnostics.Process.Start(_screenshotPath);
         }
+
+        _isInProgess = false;
     }
 
     private void CaptureShot(int width, int height)
@@ -148,7 +181,7 @@ public class ScreenshotHandler : MonoBehaviour
         _captureOnNextFrame = true;
     }
 
-    private string CapturePath(int width , int height)
+    private string CapturePath(int width, int height)
     {
         DateTime current = DateTime.Now;
         string time = current.ToLongTimeString().Trim(' ').Split(' ')[0];
@@ -164,8 +197,8 @@ public class ScreenshotHandler : MonoBehaviour
 
 
         sb.Append(current.Ticks.ToString());
-        return Path.Combine(_screenshotPath, _pictureName + "_" +width.ToString()+"_"+height.ToString()
-                                             +"_"+
+        return Path.Combine(_screenshotPath, _pictureName + "_" + width.ToString() + "_" + height.ToString()
+                                             + "_" +
          sb + ExtensionHandler.Extension(Extension));
 
     }
