@@ -31,6 +31,8 @@ public class ScreenshotHandler : MonoBehaviour
 
     #endregion
 
+    #region Private
+
     private string _pictureName = "Screenshot";
 
     private static string _screenshotPath;
@@ -40,6 +42,8 @@ public class ScreenshotHandler : MonoBehaviour
     private Camera _camera;
 
     private bool _captureOnNextFrame;
+
+    #endregion
 
     private void Awake()
     {
@@ -170,7 +174,6 @@ public class ScreenshotHandler : MonoBehaviour
          sb + ExtensionHandler.Extension(Extension));
 
     }
-
 
     private void OnButtonDown()
     {
