@@ -20,6 +20,7 @@ public class ScreenshotHandler : MonoBehaviour
 
     [Tooltip("Choosing a picture format from here")]
     private TextureFormat TextureFormat = TextureFormat.ARGB32;
+
     [Tooltip("Path to save screenshots ...")]
     public string ScreenshotPath;
 
@@ -54,6 +55,8 @@ public class ScreenshotHandler : MonoBehaviour
 
     private void Start()
     {
+
+
         if (ReadyToCapture())
         {
             Debug.Log("Screenshot tool is ready to capture !");
@@ -68,44 +71,52 @@ public class ScreenshotHandler : MonoBehaviour
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         Graphics.Blit(source, destination);
-
         if (!ReadyToCapture())
+        {
             return;
-
+        }
 
         if (_captureOnNextFrame)
         {
-            for (int i = 0; i < PictureSpecs.Length; i++)
+            try
             {
-                var tempRT = RenderTexture.GetTemporary((int)PictureSpecs[i].x, (int)PictureSpecs[i].y);
-                Graphics.Blit(source, tempRT);
+                for (int i = 0; i < PictureSpecs.Length; i++)
+                {
+                    var tempRT = RenderTexture.GetTemporary((int)PictureSpecs[i].x, (int)PictureSpecs[i].y);
+                    Graphics.Blit(source, tempRT);
 
-                var tempTex = new Texture2D((int)PictureSpecs[i].x, (int)PictureSpecs[i].y,
-                    TextureFormat.RGBA32, false);
+                    var tempTex = new Texture2D((int)PictureSpecs[i].x, (int)PictureSpecs[i].y,
+                        TextureFormat.RGBA32, false);
 
-                tempTex.ReadPixels(new Rect(0, 0, (int)PictureSpecs[i].x,
-                    (int)PictureSpecs[i].y), 0, 0, false);
+                    tempTex.ReadPixels(new Rect(0, 0, (int)PictureSpecs[i].x,
+                        (int)PictureSpecs[i].y), 0, 0, false);
 
-                tempTex.Apply();
+                    tempTex.Apply();
 
-                byte[] byteArray;
+                    byte[] byteArray;
 
-                byteArray = ExtensionHandler.ByteArray(tempTex, Extension);
+                    byteArray = ExtensionHandler.ByteArray(tempTex, Extension);
 
-                string filePath = FilePath(tempRT);
-
-
-                WriteImageToFile(filePath, byteArray);
-
-
-                Graphics.Blit(source, destination);
-                Destroy(tempTex);
-                RenderTexture.ReleaseTemporary(tempRT);
-
-                Debug.Log("FINISHED");
+                    string filePath = FilePath(tempRT);
 
 
+                    WriteImageToFile(filePath, byteArray);
+
+
+                    Graphics.Blit(source, destination);
+                    Destroy(tempTex);
+                    RenderTexture.ReleaseTemporary(tempRT);
+
+                    Debug.Log("FINISHED");
+
+
+                }
             }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+            }
+
 
             if (OpenFileDirectory)
             {
@@ -122,6 +133,7 @@ public class ScreenshotHandler : MonoBehaviour
         if (Input.GetKeyDown(ScreenShotKey))
         {
             OnButtonDown();
+            Debug.Log(TextureFormat);
         }
 
     }
@@ -199,6 +211,11 @@ public class ScreenshotHandler : MonoBehaviour
 
     private bool ReadyToCapture()
     {
+        if (Extension == PictureExtension.EXR)
+        {
+            TextureFormat = TextureFormat.RGBAHalf;
+        }
+
         if (ScreenShotKey == KeyCode.None)
         {
             Debug.LogError("No screenshot key selected...");
@@ -211,7 +228,15 @@ public class ScreenshotHandler : MonoBehaviour
         }
         if (ScreenshotPath == "")
         {
-            Debug.LogWarning("No path given .. Will create one ..");
+            if (File.Exists(ScreenshotPath))
+            {
+                Debug.LogWarning("No path given .. will use previously created.");
+            }
+            else
+            {
+
+                Debug.LogWarning("Neither path given nor path created.. Will create one ..");
+            }
         }
 
         if (PictureSpecs.Length == 0)
@@ -243,10 +268,7 @@ public class ScreenshotHandler : MonoBehaviour
             SetCanvas();
         }
 
-        if (Extension == PictureExtension.EXR)
-        {
-            TextureFormat = TextureFormat.RGBAHalf;
-        }
+
 
         return true;
     }
