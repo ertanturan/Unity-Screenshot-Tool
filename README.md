@@ -15,15 +15,23 @@ This project serves as an internal localization system for unity-based projects 
 2. Download the lates release of the package.
 3. Import it to your unity project.
 
-
-
 ## Installation
 
 NaN Required.
 
 ## Usage
 
-...
+1.Attach 'ScreenshotHandler.cs' to the camera you would like to capture from.
+2.Set the properties of the component as you wish (Explanations are below.)
+
+... IMAGE WILL BE HERE ..
+
+Canvas : Canvas you would like to capture .
+Picture Specs(List) :  Widht and height properties that you desire in your capture (e.g. 1920x1080 , 1024x720)
+Screenshot Key = The key which you will trigger/press/touch when you want to capture .
+Screenshot Path : Direction of a save folder. (Can be empty. Tool will assign a persisten data path. )
+Extension : In which texture format you want to export your capture ?
+Open File Directory : Show where your captures are saved to.
 
 ## Demo Project
 
