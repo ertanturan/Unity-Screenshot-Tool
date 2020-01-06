@@ -7,14 +7,14 @@ This project serves as an internal localization system for unity-based projects 
 2. Capturing the current frame.
 3. Capturing UI.
 4. Capturing Post-Process Effect.
-
+5. Exporting capture in different texture formats such as ; .PNG .JPG .EXR AND .TGA .
 
 ## Import
 
 1. Go to [release](https://github.com/ertanturan/Unity-Screenshot-Tool/releases) page.
 2. Download the lates release of the package.
 3. Import it to your unity project.
-4. Exporting capture in different texture formats such as ; .PNG .JPG .EXR AND .TGA .
+
 
 
 ## Installation
