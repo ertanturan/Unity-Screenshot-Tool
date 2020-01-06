@@ -10,7 +10,7 @@ This project serves as an internal localization system for unity-based projects 
 
 ## Installation
 
-...
+NaN Required.
 
 ## Usage
 
