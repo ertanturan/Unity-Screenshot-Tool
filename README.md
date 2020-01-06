@@ -21,8 +21,8 @@ NaN Required.
 
 ## Usage
 
-1.Attach 'ScreenshotHandler.cs' to the camera you would like to capture from.
-2.Set the properties of the component as you wish (Explanations are below.)
+1. Attach 'ScreenshotHandler.cs' to the camera you would like to capture from.
+2. Set the properties of the component as you wish (Explanations are below.)
 
 ... IMAGE WILL BE HERE ..
 
