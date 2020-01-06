@@ -27,7 +27,7 @@ NaN Required.
 
 
 
-![alt text](https://prnt.sc/qjy0sh)
+![Screenshot of the ScreenshotHandler component](https://prnt.sc/qjy0sh)
 
 ... IMAGE WILL BE HERE ..
 
