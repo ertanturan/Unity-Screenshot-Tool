@@ -9,6 +9,7 @@ This project serves as an internal localization system for unity-based projects 
 4. Capturing Post-Process Effect.
 5. Exporting capture in different texture formats such as ; .PNG .JPG .EXR AND .TGA .
 
+
 ## Import
 
 1. Go to [release](https://github.com/ertanturan/Unity-Screenshot-Tool/releases) page.
@@ -32,6 +33,10 @@ Screenshot Key = The key which you will trigger/press/touch when you want to cap
 Screenshot Path : Direction of a save folder. (Can be empty. Tool will assign a persisten data path. )
 Extension : In which texture format you want to export your capture ?
 Open File Directory : Show where your captures are saved to.
+
+3. Press Play.
+4. Press the key that you set when you want to capture.
+5. ENJOY !.
 
 ## Demo Project
 
