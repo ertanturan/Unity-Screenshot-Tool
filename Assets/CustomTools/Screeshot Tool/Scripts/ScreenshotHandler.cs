@@ -1,275 +1,261 @@
-﻿using System;
-using System.Collections;
+using System;
 using System.IO;
-using System.Text;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
+[Serializable]
 public class ScreenshotHandler : MonoBehaviour
 {
-    public static ScreenshotHandler Instance;
 
-    #region Editor
-    public Canvas Canvas;
+    public bool screenshot_iOS = true, iOS_isPortrait = false;
 
-    [Tooltip("Width and Height of a desired screenshot .")]
-    public Vector2[] PictureSpecs;
+    public bool screenshot_Android = true;
 
-    [Tooltip("Keyboard key to actually take screenshot . ")]
-    public KeyCode ScreenShotKey = KeyCode.Space;
+    public bool screenshot_PC = true;
 
-    [Tooltip("Choosing a picture format from here")]
-    private TextureFormat TextureFormat = TextureFormat.ARGB32;
+    public bool transparent = false;
 
-    [Tooltip("Path to save screenshots ...")]
-    public string ScreenshotPath;
+    public int android_width = 800, android_height = 480;
 
-    [Tooltip("Extension of the desired screenshot")]
-    public PictureExtension Extension = PictureExtension.PNG;
+    public int pc_width = 1600, pc_height = 900;
 
-    [Tooltip("Opens where your screenshots saved to..")]
-    public bool OpenFileDirectory = true;
+    public int enlarge = 1;
 
-    #endregion
 
-    #region Private
+    public KeyCode screenshotKey = KeyCode.Space;
 
-    private string _pictureName = "Screenshot";
+    private int[] iOSRes = new int[] { 960, 640, 1136, 640, 1334, 750, 2208, 1242, 2048, 1536, 2732, 2048 };
+    private int picture;
+    private bool takeHiResShot = false;
+    private TextureFormat transp = TextureFormat.ARGB32;
+    private TextureFormat nonTransp = TextureFormat.RGB24;
+    private string size;
 
-    private static string _screenshotPath;
 
-    private bool _isInProgess;
-
-    private Camera _camera;
-
-    private bool _captureOnNextFrame;
-
-    #endregion
-
-    private void Awake()
+    public static string ScreenShotName(int photoNumber, string plataform, int width, int height)
     {
-        Instance = this;
-        _camera = GetComponent<Camera>();
-        _screenshotPath = Path.Combine(Application.persistentDataPath, "Screenshots");
+        return string.Format("{0}/../screenshots/" + photoNumber + "_" + plataform + "screen_{1}x{2}_{3}.png", Application.dataPath, width, height, System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
     }
 
-    private void Start()
+    void LateUpdate()
     {
 
-
-        if (ReadyToCapture())
+        if (Input.GetKey(screenshotKey))
         {
-            Debug.Log("Screenshot tool is ready to capture !");
-        }
-        else
-        {
-            Debug.LogError("Screenshot tool is not set correctly . " +
-                             "It won't work if not set correct.");
-        }
-    }
-
-    void OnRenderImage(RenderTexture source, RenderTexture destination)
-    {
-        Graphics.Blit(source, destination);
-        if (!ReadyToCapture())
-        {
-            return;
+            takeHiResShot = true;
         }
 
-        if (_captureOnNextFrame)
+        if (takeHiResShot)
         {
-            try
+
+            picture = PlayerPrefs.GetInt("PhotoNumber");
+            picture++;
+            PlayerPrefs.SetInt("PhotoNumber", picture);
+
+            if (screenshot_iOS)
             {
-                for (int i = 0; i < PictureSpecs.Length; i++)
+                if (!iOS_isPortrait)
                 {
-                    var tempRT = RenderTexture.GetTemporary((int)PictureSpecs[i].x, (int)PictureSpecs[i].y);
-                    Graphics.Blit(source, tempRT);
-
-                    var tempTex = new Texture2D((int)PictureSpecs[i].x, (int)PictureSpecs[i].y,
-                        TextureFormat.RGBA32, false);
-
-                    tempTex.ReadPixels(new Rect(0, 0, (int)PictureSpecs[i].x,
-                        (int)PictureSpecs[i].y), 0, 0, false);
-
-                    tempTex.Apply();
-
-                    byte[] byteArray;
-
-                    byteArray = ExtensionHandler.ByteArray(tempTex, Extension);
-
-                    string filePath = FilePath(tempRT);
-
-
-                    WriteImageToFile(filePath, byteArray);
-
-
-                    Graphics.Blit(source, destination);
-                    Destroy(tempTex);
-                    RenderTexture.ReleaseTemporary(tempRT);
-
-                    Debug.Log("FINISHED");
-
-
+                    LandScapeiOS();
+                }
+                else
+                {
+                    PortraitiOS();
                 }
             }
-            catch (Exception e)
+
+            if (screenshot_Android)
             {
-                Debug.LogError(e.Message);
+                ScreenShotAndroid();
             }
 
-
-            if (OpenFileDirectory)
+            if (screenshot_PC)
             {
-                System.Diagnostics.Process.Start(_screenshotPath);
+                ScreenshotPC();
             }
-            _captureOnNextFrame = false;
-        }
 
-
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(ScreenShotKey))
-        {
-            OnButtonDown();
-            Debug.Log(TextureFormat);
-        }
-
-    }
-
-    private string FilePath(RenderTexture rendTxt)
-    {
-        if (ScreenshotPath == "")
-        {
-            return CapturePath(rendTxt.width, rendTxt.height);
-        }
-        else
-        {
-            return ScreenshotPath;
+            takeHiResShot = false;
         }
     }
 
-    private void WriteImageToFile(string filePath, byte[] byteArray)
-    {
-        FileInfo file = new FileInfo(filePath);
-
-        if (!file.Exists)
-        {
-            Debug.Log("ScreenshotPath doesn't exist at the given  .. ");
-            file.Directory.Create();
-            Debug.Log("Created given path..");
-        }
-
-        File.WriteAllBytes(file.FullName, byteArray);
-    }
-
-    private string CapturePath(int width, int height)
+    public void LandScapeiOS()
     {
 
-
-        DateTime current = DateTime.Now;
-        string time = current.ToLongTimeString().Trim(' ').Split(' ')[0];
-        char[] temp = time.ToCharArray();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < temp.Length; i++)
+        for (int i = 0; i < iOSRes.Length; i += 2)
         {
-            if (temp[i] != ':')
+
+            TextureFormat textForm = nonTransp;
+
+            if (transparent)
+                textForm = transp;
+
+            switch (i)
             {
-                sb.Append(temp[i]);
+                case 0:
+                    size = "3.5";
+                    break;
+                case 2:
+                    size = "4";
+                    break;
+                case 4:
+                    size = "4.7";
+                    break;
+                case 6:
+                    size = "5.5";
+                    break;
+                case 8:
+                    size = "iPad";
+                    break;
+                case 10:
+                    size = "iPadPro";
+                    break;
             }
+
+            RenderTexture rt = new RenderTexture(iOSRes[i], iOSRes[i + 1], 24);
+            Camera.main.targetTexture = rt;
+            Texture2D screenShot = new Texture2D(iOSRes[i], iOSRes[i + 1], textForm, false);
+            Camera.main.Render();
+            RenderTexture.active = rt;
+            screenShot.ReadPixels(new Rect(0, 0, iOSRes[i], iOSRes[i + 1]), 0, 0);
+            Camera.main.targetTexture = null;
+            RenderTexture.active = null;
+            Destroy(rt);
+            byte[] bytes = screenShot.EncodeToPNG();
+            string filename = ScreenShotName(picture, "IOS_" + size + "_LANDSCAPE+", iOSRes[i] * enlarge, iOSRes[i + 1] * enlarge);
+
+            if (!Directory.Exists(Application.dataPath + "/../screenshots/"))
+                Directory.CreateDirectory(Application.dataPath + "/../screenshots/");
+
+            System.IO.File.WriteAllBytes(filename, bytes);
+            Debug.Log(string.Format("Took screenshot to: {0}", filename));
         }
-
-        sb.Append(current.Ticks.ToString());
-        return Path.Combine(_screenshotPath, _pictureName + "_" + width.ToString() + "_" + height.ToString()
-                                             + "_" +
-         sb + ExtensionHandler.Extension(Extension));
-
     }
 
-    private void OnButtonDown()
+    public void PortraitiOS()
     {
-        if (!ReadyToCapture())
-            return;
 
-        if (!_isInProgess)
+        for (int i = 0; i < iOSRes.Length; i += 2)
         {
-            _captureOnNextFrame = true;
-        }
-        else
-        {
-            Debug.LogWarning("Another capture process in progress wait for a while ...");
+
+            TextureFormat textForm = nonTransp;
+
+            if (transparent)
+                textForm = transp;
+
+            switch (i)
+            {
+                case 0:
+                    size = "3.5";
+                    break;
+                case 2:
+                    size = "4";
+                    break;
+                case 4:
+                    size = "4.7";
+                    break;
+                case 6:
+                    size = "5.5";
+                    break;
+                case 8:
+                    size = "iPad";
+                    break;
+                case 10:
+                    size = "iPadPro";
+                    break;
+            }
+
+            RenderTexture rt = new RenderTexture(iOSRes[i + 1], iOSRes[i], 24);
+            Camera.main.targetTexture = rt;
+            Texture2D screenShot = new Texture2D(iOSRes[i + 1], iOSRes[i], textForm, false);
+            Camera.main.Render();
+            RenderTexture.active = rt;
+            screenShot.ReadPixels(new Rect(0, 0, iOSRes[i + 1], iOSRes[i]), 0, 0);
+            Camera.main.targetTexture = null;
+            RenderTexture.active = null;
+            Destroy(rt);
+            byte[] bytes = screenShot.EncodeToPNG();
+            string filename = ScreenShotName(picture, "IOS_" + size + "_PORTRAIT+", iOSRes[i + 1] * enlarge, iOSRes[i] * enlarge);
+
+            if (!Directory.Exists(Application.dataPath + "/../screenshots/"))
+                Directory.CreateDirectory(Application.dataPath + "/../screenshots/");
+
+            System.IO.File.WriteAllBytes(filename, bytes);
+            Debug.Log(string.Format("Took screenshot to: {0}", filename));
         }
     }
 
-    private void SetCanvas()
+    public void ScreenShotAndroid()
     {
-        Canvas.renderMode = RenderMode.ScreenSpaceCamera;
-        Canvas.worldCamera = _camera;
-        Canvas.planeDistance = 1;
+
+        if (android_width == 0)
+        {
+            android_width = 800;
+        }
+
+        if (android_height == 0)
+        {
+            android_height = 480;
+        }
+
+        TextureFormat textForm = nonTransp;
+
     }
 
-    private bool ReadyToCapture()
+    public void ScreenshotPC()
     {
-        if (Extension == PictureExtension.EXR)
+
+        if (pc_width == 0)
         {
-            TextureFormat = TextureFormat.RGBAHalf;
+            pc_width = 1600;
         }
 
-        if (ScreenShotKey == KeyCode.None)
+        if (pc_height == 0)
         {
-            Debug.LogError("No screenshot key selected...");
-            return false;
-        }
-        if (TextureFormat == 0)
-        {
-            Debug.LogError("No Texture format selected...");
-            return false;
-        }
-        if (ScreenshotPath == "")
-        {
-            if (File.Exists(ScreenshotPath))
-            {
-                Debug.LogWarning("No path given .. will use previously created.");
-            }
-            else
-            {
-
-                Debug.LogWarning("Neither path given nor path created.. Will create one ..");
-            }
+            pc_height = 900;
         }
 
-        if (PictureSpecs.Length == 0)
-        {
-            Debug.LogError("Width and Height needed !");
-            return false;
-        }
-        else
-        {
-            for (int i = 0; i < PictureSpecs.Length; i++)
-            {
-                if (PictureSpecs[i] == Vector2.zero)
-                {
-                    Debug.LogError("!! ATTENTION !! :Resolution is not set for at least 1 image !!." +
-                                   "Remove it or set a non-zero value ..");
-                    return false;
-                }
-            }
-        }
+        TextureFormat textForm = nonTransp;
+        if (transparent)
+            textForm = transp;
+        RenderTexture rt = new RenderTexture(pc_width * enlarge, pc_height * enlarge, 24);
+        Camera.main.targetTexture = rt;
+        Texture2D screenShot = new Texture2D(pc_width * enlarge, pc_height * enlarge, textForm, false);
+        Camera.main.Render();
+        RenderTexture.active = rt;
+        screenShot.ReadPixels(new Rect(0, 0, pc_width * enlarge, pc_height * enlarge), 0, 0);
+        Camera.main.targetTexture = null;
+        RenderTexture.active = null;
+        Destroy(rt);
+        byte[] bytes = screenShot.EncodeToPNG();
+        string filename = ScreenShotName(picture, "PC+", pc_width * enlarge, pc_height * enlarge);
 
-        if (Canvas == null)
-        {
-            Debug.LogError("Canvas can't be nulll");
-            return false;
-        }
+        if (!Directory.Exists(Application.dataPath + "/../screenshots/"))
+            Directory.CreateDirectory(Application.dataPath + "/../screenshots/");
 
-        if (Canvas.renderMode != RenderMode.ScreenSpaceCamera)
-        {
-            SetCanvas();
-        }
-
-
-
-        return true;
+        System.IO.File.WriteAllBytes(filename, bytes);
+        Debug.Log(string.Format("Took screenshot to: {0}", filename));
     }
+
+    private void Capture(int width, int height, int enlargeCOEF, TextureFormat textForm = TextureFormat.RGB24)
+    {
+        if (transparent)
+            textForm = transp;
+        RenderTexture rt = new RenderTexture(width * enlargeCOEF, height * enlargeCOEF, 24);
+        Camera.main.targetTexture = rt;
+        Texture2D screenShot = new Texture2D(width * enlargeCOEF, height * enlargeCOEF, textForm, false);
+        Camera.main.Render();
+        RenderTexture.active = rt;
+        screenShot.ReadPixels(new Rect(0, 0, width * enlargeCOEF, height * enlargeCOEF), 0, 0);
+        Camera.main.targetTexture = null;
+        RenderTexture.active = null;
+        Destroy(rt);
+        byte[] bytes = screenShot.EncodeToPNG();
+        string filename = ScreenShotName(picture, "ANDROID+", width * enlargeCOEF, height * enlargeCOEF);
+
+        if (!Directory.Exists(Application.dataPath + "/../screenshots/"))
+            Directory.CreateDirectory(Application.dataPath + "/../screenshots/");
+
+        System.IO.File.WriteAllBytes(filename, bytes);
+        Debug.Log(string.Format("Took screenshot to: {0}", filename));
+    }
+
 }
