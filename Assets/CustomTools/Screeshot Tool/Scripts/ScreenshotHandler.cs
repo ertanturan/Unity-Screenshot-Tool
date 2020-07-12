@@ -1,11 +1,14 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 [Serializable]
 public class ScreenshotHandler : MonoBehaviour
 {
     public bool IsTransparent = false;
+    public bool OpenFileDirecoty = true;
     private TextureFormat transp = TextureFormat.ARGB32;
     private TextureFormat nonTransp = TextureFormat.RGB24;
 
@@ -31,14 +34,14 @@ public class ScreenshotHandler : MonoBehaviour
             {
                 for (int i = 0; i < Resolutions.Length; i++)
                 {
-                    if (Resolutions[i].X == 0 || Resolutions[i].Y == 0)
+                    if (Resolutions[i].Width == 0 || Resolutions[i].Height == 0)
                     {
                         Debug.LogWarning("Resolution can't be 0 !");
                         return;
                     }
                     else
                     {
-                        Capture(Resolutions[i].X, Resolutions[i].Y, 1);
+                        Capture(Resolutions[i].Width, Resolutions[i].Height, 1);
                     }
                 }
             }
@@ -63,16 +66,21 @@ public class ScreenshotHandler : MonoBehaviour
         byte[] bytes = screenShot.EncodeToPNG();
         string filename = ScreenshotName("ANDROID+", (width * enlargeCOEF).ToString(), (height * enlargeCOEF).ToString());
 
-        if (!Directory.Exists(Application.dataPath + "/../screenshots/"))
-            Directory.CreateDirectory(Application.dataPath + "/../screenshots/");
+        if (!Directory.Exists(Application.persistentDataPath + "/../screenshots/"))
+            Directory.CreateDirectory(Application.persistentDataPath + "/../screenshots/");
 
         System.IO.File.WriteAllBytes(filename, bytes);
         Debug.Log(string.Format("Took screenshot to: {0}", filename));
+
+        if (OpenFileDirecoty)
+        {
+            Process.Start(Application.persistentDataPath + "/../screenshots/");
+        }
     }
 
-    private string ScreenshotName(string platform, string width, string heigth)
+    private string ScreenshotName(string platform, string width, string height)
     {
-        return platform + width + heigth;
+        return string.Format("{0}/../screenshots/" + "_" + platform + "screen_{1}x{2}_{3}.png", Application.persistentDataPath, width, height, System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
     }
 
 }
