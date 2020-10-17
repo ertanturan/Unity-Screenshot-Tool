@@ -31,12 +31,12 @@ NaN Required.
 
 ... IMAGE WILL BE HERE ..
 
-Canvas : Canvas you would like to capture .
-Picture Specs(List) :  Widht and height properties that you desire in your capture (e.g. 1920x1080 , 1024x720)
-Screenshot Key = The key which you will trigger/press/touch when you want to capture .
-Screenshot Path : Direction of a save folder. (Can be empty. Tool will assign a persisten data path. )
-Extension : In which texture format you want to export your capture ?
-Open File Directory : Show where your captures are saved to.
+2.1. Canvas : Canvas you would like to capture .
+2.2. Picture Specs(List) :  Widht and height properties that you desire in your capture (e.g. 1920x1080 , 1024x720)
+2.3. Screenshot Key = The key which you will trigger/press/touch when you want to capture .
+2.4. Screenshot Path : Direction of a save folder. (Can be empty. Tool will assign a persisten data path. )
+2.5. Extension : In which texture format you want to export your capture ?
+2.6. Open File Directory : Show where your captures are saved to.
 
 3. Press Play.
 4. Press the key that you set when you want to capture.
